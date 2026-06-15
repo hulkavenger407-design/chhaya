@@ -1,0 +1,152 @@
+
+<style>
+.arch{padding:0 0 16px}
+.proc{border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);overflow:hidden;margin-bottom:0}
+.proc.clickable{cursor:pointer;transition:border-color .15s}
+.proc.clickable:hover{border-color:var(--color-border-primary)}
+.proc-h{display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--color-background-secondary);border-bottom:0.5px solid var(--color-border-tertiary)}
+.proc-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.proc-title{font-size:14px;font-weight:500;color:var(--color-text-primary)}
+.proc-tech{font-size:11px;color:var(--color-text-secondary);margin-left:4px}
+.proc-pid{margin-left:auto;font-size:11px;padding:1px 8px;border:0.5px solid var(--color-border-secondary);border-radius:100px;color:var(--color-text-secondary);white-space:nowrap}
+.proc-body{padding:12px 14px}
+.mod-flow{font-size:12px;padding:6px 10px;background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);margin-bottom:8px;color:var(--color-text-secondary);font-family:var(--font-mono)}
+.modules{display:flex;flex-wrap:wrap;gap:6px}
+.mod{font-size:12px;padding:4px 10px;border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);color:var(--color-text-secondary)}
+.proc-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+.bus{display:flex;align-items:center;gap:10px;margin:8px 0;padding:0 2px}
+.bus-line{flex:1;height:0.5px;background:var(--color-border-secondary)}
+.bus-lbl{font-size:11px;color:var(--color-text-secondary);padding:2px 8px;border:0.5px solid var(--color-border-secondary);border-radius:100px;white-space:nowrap}
+.tip{font-size:11px;color:var(--color-text-secondary);text-align:center;padding:8px 0 0;opacity:.7}
+</style>
+<div class="arch">
+  <div class="proc clickable" onclick="sendPrompt('Describe the JARVIS V3 desktop application in detail. What does the Iron Man UI look like? What Qt6 widgets make up each panel?')">
+    <div class="proc-h">
+      <div class="proc-dot" style="background:#378ADD"></div>
+      <span class="proc-title">Desktop application</span>
+      <span class="proc-tech">PySide6 · Qt6 · Iron Man glassmorphism theme</span>
+      <span class="proc-pid">Process 0</span>
+    </div>
+    <div class="proc-body">
+      <div class="modules">
+        <span class="mod">Chat panel</span>
+        <span class="mod">Voice indicator</span>
+        <span class="mod">Agent status</span>
+        <span class="mod">Tool execution viz</span>
+        <span class="mod">Memory browser</span>
+        <span class="mod">Skill manager</span>
+        <span class="mod">Model selector</span>
+        <span class="mod">Settings panel</span>
+        <span class="mod">System tray</span>
+        <span class="mod">Auto-start on boot</span>
+      </div>
+    </div>
+  </div>
+  <div class="bus"><div class="bus-line"></div><div class="bus-lbl"><i class="ti ti-arrows-exchange" aria-hidden="true"></i> WebSocket (asyncio)</div><div class="bus-line"></div></div>
+  <div class="proc-row">
+    <div class="proc clickable" onclick="sendPrompt('Deep dive the JARVIS V3 Core Engine. How does the LangGraph state machine work? Walk me through the 6 graph nodes and what each agent does.')">
+      <div class="proc-h">
+        <div class="proc-dot" style="background:#1D9E75"></div>
+        <span class="proc-title">Core engine</span>
+        <span class="proc-tech">LangGraph 0.2 · asyncio</span>
+        <span class="proc-pid">Process 1</span>
+      </div>
+      <div class="proc-body">
+        <div class="mod-flow">Input → Planner → Router → Executor → Memory → Output</div>
+        <div class="modules">
+          <span class="mod">Coordinator agent</span>
+          <span class="mod">Planner agent</span>
+          <span class="mod">Researcher agent</span>
+          <span class="mod">Coder agent</span>
+          <span class="mod">Learner agent</span>
+          <span class="mod">Memory agent</span>
+          <span class="mod">Tool registry</span>
+          <span class="mod">Security guard</span>
+        </div>
+      </div>
+    </div>
+    <div class="proc clickable" onclick="sendPrompt('Explain the JARVIS V3 Brain module in detail. How does the model router score intent and pick between Qwen, DeepSeek, Phi and others?')">
+      <div class="proc-h">
+        <div class="proc-dot" style="background:#BA7517"></div>
+        <span class="proc-title">Brain</span>
+        <span class="proc-tech">Ollama · optional APIs</span>
+        <span class="proc-pid">Process 2</span>
+      </div>
+      <div class="proc-body">
+        <div class="mod-flow">Intent → score → model select → infer</div>
+        <div class="modules">
+          <span class="mod">Model router</span>
+          <span class="mod">Auto-registry</span>
+          <span class="mod">Benchmarker</span>
+          <span class="mod">Ollama provider</span>
+          <span class="mod">Claude API</span>
+          <span class="mod">OpenAI API</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="bus"><div class="bus-line"></div><div class="bus-lbl"><i class="ti ti-topology-ring" aria-hidden="true"></i> Event bus (asyncio pubsub)</div><div class="bus-line"></div></div>
+  <div class="proc-row">
+    <div class="proc clickable" onclick="sendPrompt('Explain the JARVIS V3 voice pipeline state machine in detail. How does the audio feedback bug get fixed? Walk through IDLE → ACTIVATED → RECORDING → STT → SPEAKING states.')">
+      <div class="proc-h">
+        <div class="proc-dot" style="background:#0F6E56"></div>
+        <span class="proc-title">Voice pipeline</span>
+        <span class="proc-tech">MeloTTS · Whisper · OpenWakeWord</span>
+        <span class="proc-pid">Process 3</span>
+      </div>
+      <div class="proc-body">
+        <div class="mod-flow">Wake word → mic open → STT → engine → TTS</div>
+        <div class="modules">
+          <span class="mod">OpenWakeWord</span>
+          <span class="mod">Faster-Whisper</span>
+          <span class="mod">MeloTTS (primary)</span>
+          <span class="mod">Piper (fallback)</span>
+          <span class="mod">State machine</span>
+          <span class="mod">VAD</span>
+          <span class="mod">Interrupt support</span>
+        </div>
+      </div>
+    </div>
+    <div class="proc clickable" onclick="sendPrompt('Tell me about the JARVIS V3 Telegram remote control. What commands can I send from my phone? How do security approvals work as inline buttons?')">
+      <div class="proc-h">
+        <div class="proc-dot" style="background:#993C1D"></div>
+        <span class="proc-title">Remote control</span>
+        <span class="proc-tech">Telegram bot · FastAPI</span>
+        <span class="proc-pid">Process 4</span>
+      </div>
+      <div class="proc-body">
+        <div class="mod-flow">Phone → Telegram → JARVIS → results</div>
+        <div class="modules">
+          <span class="mod">Telegram bot</span>
+          <span class="mod">Voice messages</span>
+          <span class="mod">FastAPI REST</span>
+          <span class="mod">WebSocket</span>
+          <span class="mod">Push notifications</span>
+          <span class="mod">Inline approve/deny</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="bus"><div class="bus-line"></div><div class="bus-lbl"><i class="ti ti-database" aria-hidden="true"></i> Shared data layer</div><div class="bus-line"></div></div>
+  <div class="proc">
+    <div class="proc-h">
+      <div class="proc-dot" style="background:#888780"></div>
+      <span class="proc-title">Data layer</span>
+      <span class="proc-tech">ChromaDB · SQLite · Git · File system</span>
+      <span class="proc-pid">Shared</span>
+    </div>
+    <div class="proc-body">
+      <div class="modules">
+        <span class="mod">Short-term memory</span>
+        <span class="mod">Episodic log (SQLite)</span>
+        <span class="mod">Semantic vectors (ChromaDB)</span>
+        <span class="mod">Skill profiles</span>
+        <span class="mod">Model benchmarks</span>
+        <span class="mod">Audit log (append-only)</span>
+        <span class="mod">Git backup (self-edits)</span>
+        <span class="mod">Config store</span>
+      </div>
+    </div>
+  </div>
+  <p class="tip">Click any process block to ask a follow-up question about that module.</p>
+</div>
