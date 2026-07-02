@@ -11,9 +11,11 @@ import structlog
 from chhaya.core.config import settings
 from chhaya.core.event_bus import InMemoryEventBus
 from chhaya.infrastructure.storage.sqlite import SQLiteStorageProvider
+from chhaya.infrastructure.memory.chroma import ChromaMemoryProvider
 from chhaya.infrastructure.llm.ollama import OllamaProvider
 from chhaya.infrastructure.workspace.local import LocalWorkspace
 from chhaya.core.tool_registry import ToolRegistry
+from chhaya.tools.memory_tool import SaveMemoryTool
 from chhaya.core.agent_registry import AgentRegistry
 from chhaya.core.factory import AgentFactory
 from chhaya.core.execution_engine import ExecutionEngine
@@ -28,8 +30,13 @@ class AppState:
     def __init__(self):
         self.event_bus = InMemoryEventBus()
         self.storage = SQLiteStorageProvider(database_url=settings.storage.database_url)
+        self.memory = ChromaMemoryProvider(persist_directory=settings.memory.path)
         self.llm = OllamaProvider(base_url=settings.ollama_base_url)
+
         self.tool_registry = ToolRegistry()
+        # Register built-in tools
+        self.tool_registry.register(SaveMemoryTool(memory_provider=self.memory))
+
         self.agent_registry = AgentRegistry(storage_provider=self.storage)
 
         self.factory = AgentFactory(
@@ -41,7 +48,8 @@ class AppState:
         self.execution = ExecutionEngine(
             llm_provider=self.llm,
             event_bus=self.event_bus,
-            tool_registry=self.tool_registry
+            tool_registry=self.tool_registry,
+            memory_provider=self.memory
         )
         self.reflection = ReflectionEngine(
             llm_provider=self.llm,

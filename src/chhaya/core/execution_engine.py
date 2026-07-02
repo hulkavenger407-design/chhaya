@@ -11,6 +11,7 @@ from chhaya.interfaces.event_bus import EventBus
 from chhaya.interfaces.llm_provider import LLMProvider
 from chhaya.core.tool_registry import ToolRegistry
 from chhaya.interfaces.workspace import Workspace
+from chhaya.interfaces.memory_provider import MemoryProvider
 
 logger = structlog.get_logger(__name__)
 
@@ -25,6 +26,7 @@ class ExecutionEngine:
         llm_provider: LLMProvider,
         event_bus: EventBus,
         tool_registry: ToolRegistry,
+        memory_provider: MemoryProvider
     ):
         """
         Initializes the Execution Engine with its required dependencies.
@@ -32,6 +34,7 @@ class ExecutionEngine:
         self.llm_provider = llm_provider
         self.event_bus = event_bus
         self.tool_registry = tool_registry
+        self.memory_provider = memory_provider
 
     def _build_system_prompt(self, blueprint: AgentBlueprint) -> str:
         """
@@ -80,9 +83,21 @@ class ExecutionEngine:
 
         system_prompt = self._build_system_prompt(blueprint)
 
-        # Construct the full prompt (in a real system, this would be a message array)
-        # For Phase 4, we use a simple concatenated string representation.
-        full_prompt = f"System:\n{system_prompt}\n\nUser Task:\n{task}\n\nAgent:"
+        # Integrate Memory (RAG)
+        context_string = ""
+        if blueprint.memory_config.enable_vector_store:
+            try:
+                memories = self.memory_provider.search(namespace=blueprint.name, query=task, limit=3)
+                if memories:
+                    context_string = "Relevant Past Memories:\n"
+                    for m in memories:
+                        context_string += f"- {m.text}\n"
+                    context_string += "\n"
+            except Exception as e:
+                logger.warning("Failed to retrieve memories for agent run", agent=blueprint.name, error=str(e))
+
+        # Construct the full prompt
+        full_prompt = f"System:\n{system_prompt}\n\n{context_string}User Task:\n{task}\n\nAgent:"
 
         try:
             # Generate the response
@@ -91,8 +106,7 @@ class ExecutionEngine:
                 model_tier=blueprint.model_tier.value
             )
 
-            # (Phase 4 scope limitation: Tool parsing/execution loop will be built in subsequent phases.
-            # Currently, it just performs a single LLM pass and returns).
+            # (Scope limitation: Tool parsing/execution loop will be built in subsequent phases.)
 
             self.event_bus.publish("agent_run_completed", {
                 "agent_name": blueprint.name,

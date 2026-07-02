@@ -67,31 +67,12 @@ class AgentRegistry:
         Retrieves all latest AgentBlueprints from the registry.
         """
         data_list = self.storage.list(self.COLLECTION_NAME)
-        blueprints = []
-
-        # In our storage schema, latest pointers are saved with just the name,
-        # while historical versions are saved as {name}_v{version}.
-        # So we can easily load unique agents by deduplicating by name.
-        seen_names = set()
-
-        for data in data_list:
-            try:
-                bp = AgentBlueprint(**data)
-                # Only return the "latest" representations, skip history records for list
-                if bp.name not in seen_names:
-                    # To be absolutely sure we're serving the latest, we reload from name key.
-                    # But the simplest approach is just checking if we've seen it.
-                    # Because data_list has everything, we might hit v1, v2, and "latest"
-                    # But if we rely on the `latest` pointers:
-                    pass
-            except Exception:
-                continue
-
-        # Better approach: Just iterate over all, group by name, keep max version
         latest_versions = {}
+
         for data in data_list:
             try:
                 bp = AgentBlueprint(**data)
+                # Keep only the highest version per agent name
                 if bp.name not in latest_versions or bp.version > latest_versions[bp.name].version:
                     latest_versions[bp.name] = bp
             except Exception:

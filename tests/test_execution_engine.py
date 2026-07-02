@@ -6,12 +6,13 @@ from unittest.mock import MagicMock
 import pytest
 
 from chhaya.core.execution_engine import ExecutionEngine
-from chhaya.domain.models import AgentBlueprint, ModelTier, GuardrailLevel
+from chhaya.domain.models import AgentBlueprint, ModelTier, GuardrailLevel, MemoryConfig
 from chhaya.interfaces.event_bus import EventBus
 from chhaya.interfaces.llm_provider import LLMProvider
 from chhaya.interfaces.tool_plugin import ToolPlugin
 from chhaya.core.tool_registry import ToolRegistry
 from chhaya.interfaces.workspace import Workspace
+from chhaya.interfaces.memory_provider import MemoryProvider, MemoryRecord
 
 
 # --- Mock Implementations ---
@@ -55,6 +56,20 @@ class MockWorkspace(Workspace):
     def read_file(self, filename: str) -> str: return ""
 
 
+class MockMemoryProvider(MemoryProvider):
+    def __init__(self, mock_records=None):
+        self.mock_records = mock_records or []
+
+    def store(self, namespace: str, record: MemoryRecord) -> None:
+        pass
+
+    def search(self, namespace: str, query: str, limit: int = 5) -> list[MemoryRecord]:
+        return self.mock_records
+
+    def delete(self, namespace: str, record_id: str) -> bool:
+        return True
+
+
 # --- Tests ---
 
 @pytest.fixture
@@ -76,8 +91,14 @@ def test_execution_engine_success(base_blueprint):
     registry = ToolRegistry()
     registry.register(MockTool())
     workspace = MockWorkspace()
+    memory = MockMemoryProvider()
 
-    engine = ExecutionEngine(llm_provider=llm, event_bus=bus, tool_registry=registry)
+    engine = ExecutionEngine(
+        llm_provider=llm,
+        event_bus=bus,
+        tool_registry=registry,
+        memory_provider=memory
+    )
 
     # Run
     result = engine.run(blueprint=base_blueprint, task="Do the thing", workspace=workspace)
@@ -104,8 +125,14 @@ def test_execution_engine_failure(base_blueprint):
     bus = MockEventBus()
     registry = ToolRegistry()
     workspace = MockWorkspace()
+    memory = MockMemoryProvider()
 
-    engine = ExecutionEngine(llm_provider=llm, event_bus=bus, tool_registry=registry)
+    engine = ExecutionEngine(
+        llm_provider=llm,
+        event_bus=bus,
+        tool_registry=registry,
+        memory_provider=memory
+    )
 
     with pytest.raises(RuntimeError, match="Execution failed for agent test_agent: LLM Failure"):
         engine.run(blueprint=base_blueprint, task="Do the thing", workspace=workspace)
@@ -114,3 +141,32 @@ def test_execution_engine_failure(base_blueprint):
     assert bus.published_events[0]["type"] == "agent_run_started"
     assert bus.published_events[1]["type"] == "agent_run_failed"
     assert "error" in bus.published_events[1]["payload"]
+
+
+def test_execution_engine_with_memory_rag(base_blueprint):
+    base_blueprint.memory_config.enable_vector_store = True
+
+    llm = MockLLMProvider(expected_response="RAG complete!")
+    bus = MockEventBus()
+    registry = ToolRegistry()
+    workspace = MockWorkspace()
+
+    mock_records = [
+        MemoryRecord(id="1", text="Past memory: user likes pizza"),
+        MemoryRecord(id="2", text="Past memory: project name is Chhaya")
+    ]
+    memory = MockMemoryProvider(mock_records=mock_records)
+
+    engine = ExecutionEngine(
+        llm_provider=llm,
+        event_bus=bus,
+        tool_registry=registry,
+        memory_provider=memory
+    )
+
+    engine.run(blueprint=base_blueprint, task="What is the project name?", workspace=workspace)
+
+    # Check LLM Prompt construction for RAG injection
+    assert "Relevant Past Memories:" in llm.last_prompt
+    assert "Past memory: user likes pizza" in llm.last_prompt
+    assert "Past memory: project name is Chhaya" in llm.last_prompt
