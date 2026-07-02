@@ -4,6 +4,7 @@ Provides the primary user interaction surface using Typer.
 """
 
 import sys
+import asyncio
 from typing import Any, Dict
 import typer
 from rich.console import Console
@@ -21,6 +22,7 @@ from chhaya.core.agent_registry import AgentRegistry
 from chhaya.core.factory import AgentFactory
 from chhaya.core.execution_engine import ExecutionEngine
 from chhaya.core.reflection_engine import ReflectionEngine
+from chhaya.interfaces.voice import VoiceInterface
 
 app = typer.Typer(help="Chhaya: Autonomous Agent Factory", no_args_is_help=True)
 console = Console()
@@ -166,6 +168,17 @@ def reflect(
     except Exception as e:
         console.print(f"[bold red]Unexpected error:[/bold red] {e}")
         raise typer.Exit(code=1)
+
+@app.command()
+def voice():
+    """
+    Starts the continuous voice assistant loop with wake-word detection.
+    """
+    workspace = LocalWorkspace(agent_name="voice_assistant", base_path=settings.workspace.base_path)
+    voice_ui = VoiceInterface(execution_engine=ctx.execution, workspace=workspace)
+
+    # Run the async loop
+    asyncio.run(voice_ui.start_loop())
 
 
 if __name__ == "__main__":
