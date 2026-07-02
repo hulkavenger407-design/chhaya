@@ -18,8 +18,9 @@ from chhaya.interfaces.memory_provider import MemoryProvider, MemoryRecord
 # --- Mock Implementations ---
 
 class MockLLMProvider(LLMProvider):
-    def __init__(self, expected_response="Mocked response", should_fail=False):
-        self.expected_response = expected_response
+    def __init__(self, responses, should_fail=False):
+        self.responses = responses
+        self.call_count = 0
         self.should_fail = should_fail
         self.last_prompt = None
 
@@ -27,7 +28,11 @@ class MockLLMProvider(LLMProvider):
         self.last_prompt = prompt
         if self.should_fail:
             raise ValueError("LLM Failure")
-        return self.expected_response
+
+        # Return sequence of responses for ReAct loop testing
+        resp = self.responses[self.call_count]
+        self.call_count += 1
+        return resp
 
 
 class MockEventBus(EventBus):
@@ -46,7 +51,7 @@ class MockTool(ToolPlugin):
     def name(self): return "mock_tool"
     @property
     def description(self): return "A mock tool for testing."
-    def execute(self, **kwargs): return "Executed"
+    def execute(self, **kwargs): return "Executed the mock tool"
 
 
 class MockWorkspace(Workspace):
@@ -86,7 +91,7 @@ def base_blueprint():
 
 def test_execution_engine_success(base_blueprint):
     # Setup dependencies
-    llm = MockLLMProvider(expected_response="Task complete!")
+    llm = MockLLMProvider(responses=["Task complete!"])
     bus = MockEventBus()
     registry = ToolRegistry()
     registry.register(MockTool())
@@ -121,7 +126,7 @@ def test_execution_engine_success(base_blueprint):
 
 
 def test_execution_engine_failure(base_blueprint):
-    llm = MockLLMProvider(should_fail=True)
+    llm = MockLLMProvider(responses=[], should_fail=True)
     bus = MockEventBus()
     registry = ToolRegistry()
     workspace = MockWorkspace()
@@ -146,7 +151,7 @@ def test_execution_engine_failure(base_blueprint):
 def test_execution_engine_with_memory_rag(base_blueprint):
     base_blueprint.memory_config.enable_vector_store = True
 
-    llm = MockLLMProvider(expected_response="RAG complete!")
+    llm = MockLLMProvider(responses=["RAG complete!"])
     bus = MockEventBus()
     registry = ToolRegistry()
     workspace = MockWorkspace()
@@ -170,3 +175,58 @@ def test_execution_engine_with_memory_rag(base_blueprint):
     assert "Relevant Past Memories:" in llm.last_prompt
     assert "Past memory: user likes pizza" in llm.last_prompt
     assert "Past memory: project name is Chhaya" in llm.last_prompt
+
+
+def test_execution_engine_react_loop(base_blueprint):
+    # LLM simulates a tool call, then a final answer
+    responses = [
+        '```json\n{"tool_call": true, "name": "mock_tool", "arguments": {}}\n```',
+        'Final answer: The tool was executed.'
+    ]
+
+    llm = MockLLMProvider(responses=responses)
+    bus = MockEventBus()
+    registry = ToolRegistry()
+    registry.register(MockTool())
+    workspace = MockWorkspace()
+    memory = MockMemoryProvider()
+
+    engine = ExecutionEngine(
+        llm_provider=llm,
+        event_bus=bus,
+        tool_registry=registry,
+        memory_provider=memory
+    )
+
+    result = engine.run(blueprint=base_blueprint, task="Use the tool", workspace=workspace)
+
+    assert result == "Final answer: The tool was executed."
+    assert llm.call_count == 2
+
+    # Check that the observation was injected into the prompt
+    assert "Observation: Executed the mock tool" in llm.last_prompt
+
+
+def test_execution_engine_max_iterations(base_blueprint):
+    # Simulate LLM stuck in an infinite tool call loop
+    responses = ['```json\n{"tool_call": true, "name": "mock_tool", "arguments": {}}\n```'] * 15
+
+    llm = MockLLMProvider(responses=responses)
+    bus = MockEventBus()
+    registry = ToolRegistry()
+    registry.register(MockTool())
+    workspace = MockWorkspace()
+    memory = MockMemoryProvider()
+
+    engine = ExecutionEngine(
+        llm_provider=llm,
+        event_bus=bus,
+        tool_registry=registry,
+        memory_provider=memory
+    )
+
+    # Engine defaults to MAX_ITERATIONS = 10
+    with pytest.raises(RuntimeError, match="exceeded maximum iterations"):
+        engine.run(blueprint=base_blueprint, task="Loop forever", workspace=workspace)
+
+    assert llm.call_count == 10

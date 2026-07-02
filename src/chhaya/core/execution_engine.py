@@ -3,6 +3,7 @@ Execution Engine for Chhaya.
 Orchestrates the running of an AgentBlueprint against a specific task.
 """
 
+import json
 from typing import Any, Dict
 import structlog
 
@@ -20,6 +21,8 @@ class ExecutionEngine:
     """
     Executes an agent run by coordinating the LLM, tools, and workspace.
     """
+
+    MAX_ITERATIONS = 10
 
     def __init__(
         self,
@@ -39,9 +42,23 @@ class ExecutionEngine:
     def _build_system_prompt(self, blueprint: AgentBlueprint) -> str:
         """
         Constructs the final system prompt by combining the blueprint's core prompt
-        with tool descriptions and guardrail instructions.
+        with tool descriptions, guardrail instructions, and ReAct loop formatting.
         """
         prompt = f"Role: {blueprint.role}\n\n{blueprint.system_prompt}\n\n"
+
+        # Inject ReAct format instructions
+        prompt += """To interact with the user, simply reply directly with your text.
+If you need to use a tool to gather information or perform an action, output ONLY a valid JSON object starting with ```json containing the key "tool_call", "name", and "arguments".
+Example:
+```json
+{
+  "tool_call": true,
+  "name": "tool_name",
+  "arguments": {"arg1": "value"}
+}
+```
+The system will run the tool and feed the observation back to you. Do NOT output anything else when making a tool call.
+\n"""
 
         # Inject tool information
         if blueprint.tools:
@@ -60,17 +77,26 @@ class ExecutionEngine:
 
         return prompt
 
+    def _parse_tool_call(self, llm_output: str) -> Dict[str, Any] | None:
+        """
+        Attempts to parse a tool call from the LLM output.
+        """
+        cleaned = llm_output.strip()
+        if cleaned.startswith("```json"):
+            cleaned = cleaned.strip("`").removeprefix("json").strip()
+
+        if cleaned.startswith("{") and "tool_call" in cleaned:
+            try:
+                data = json.loads(cleaned)
+                if data.get("tool_call") is True and "name" in data:
+                    return data
+            except json.JSONDecodeError:
+                pass
+        return None
+
     def run(self, blueprint: AgentBlueprint, task: str, workspace: Workspace) -> str:
         """
-        Executes a single run loop for the agent to accomplish the task.
-
-        Args:
-            blueprint: The agent configuration.
-            task: The user's input task.
-            workspace: The isolated environment for this specific run.
-
-        Returns:
-            The final response string from the agent.
+        Executes a ReAct loop for the agent to accomplish the task.
         """
         run_id = f"{blueprint.name}_{hash(task)}"
 
@@ -96,26 +122,64 @@ class ExecutionEngine:
             except Exception as e:
                 logger.warning("Failed to retrieve memories for agent run", agent=blueprint.name, error=str(e))
 
-        # Construct the full prompt
-        full_prompt = f"System:\n{system_prompt}\n\n{context_string}User Task:\n{task}\n\nAgent:"
+        # Start the conversation history
+        history = f"System:\n{system_prompt}\n\n{context_string}User Task:\n{task}\n"
 
         try:
-            # Generate the response
-            response = self.llm_provider.generate(
-                prompt=full_prompt,
-                model_tier=blueprint.model_tier.value
-            )
+            iterations = 0
+            while iterations < self.MAX_ITERATIONS:
+                prompt_to_send = f"{history}\nAgent:"
 
-            # (Scope limitation: Tool parsing/execution loop will be built in subsequent phases.)
+                # Generate the response
+                response = self.llm_provider.generate(
+                    prompt=prompt_to_send,
+                    model_tier=blueprint.model_tier.value
+                )
 
-            self.event_bus.publish("agent_run_completed", {
-                "agent_name": blueprint.name,
-                "run_id": run_id,
-                "status": "success",
-                "result": response
-            })
+                # Append agent's response to history
+                history += f"\nAgent: {response}"
 
-            return response
+                # Check if the agent wants to call a tool
+                tool_call = self._parse_tool_call(response)
+
+                if tool_call:
+                    tool_name = tool_call.get("name")
+                    arguments = tool_call.get("arguments", {})
+
+                    logger.debug("Executing tool call", tool=tool_name, arguments=arguments)
+
+                    # Ensure tool is authorized for this agent
+                    if tool_name not in blueprint.tools:
+                        observation = f"Error: Tool '{tool_name}' is not authorized for this agent."
+                    else:
+                        tool = self.tool_registry.get_tool(tool_name)
+                        if tool:
+                            try:
+                                # Inject context dependencies to kwargs
+                                arguments["_agent_name"] = blueprint.name
+                                arguments["_workspace"] = workspace
+
+                                observation = str(tool.execute(**arguments))
+                            except Exception as ex:
+                                observation = f"Tool execution failed: {ex}"
+                        else:
+                            observation = f"Error: Tool '{tool_name}' not found in registry."
+
+                    logger.debug("Tool observation", tool=tool_name, observation=observation)
+                    history += f"\nObservation: {observation}"
+                    iterations += 1
+                else:
+                    # Final answer received
+                    self.event_bus.publish("agent_run_completed", {
+                        "agent_name": blueprint.name,
+                        "run_id": run_id,
+                        "status": "success",
+                        "result": response
+                    })
+                    return response
+
+            # Hit max iterations without final answer
+            raise RuntimeError("Agent run exceeded maximum iterations without completing the task.")
 
         except Exception as e:
             logger.error("Agent run failed", agent=blueprint.name, error=str(e))
