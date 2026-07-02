@@ -4,6 +4,7 @@ Provides the primary user interaction surface using Typer.
 """
 
 import sys
+from typing import Any, Dict
 import typer
 from rich.console import Console
 from rich.panel import Panel
@@ -23,6 +24,15 @@ from chhaya.core.reflection_engine import ReflectionEngine
 
 app = typer.Typer(help="Chhaya: Autonomous Agent Factory", no_args_is_help=True)
 console = Console()
+
+
+def cli_approval_callback(agent_name: str, tool_name: str, arguments: Dict[str, Any]) -> bool:
+    """Callback for CLI to request human-in-the-loop approval."""
+    console.print(f"\n[bold yellow]🛡️  Guardrail Intercept: Approval Required[/bold yellow]")
+    console.print(f"Agent [cyan]'{agent_name}'[/cyan] wants to run tool [cyan]'{tool_name}'[/cyan]")
+    console.print(f"Arguments: {arguments}")
+
+    return typer.confirm("Do you approve this action?", default=False)
 
 
 class SystemContainer:
@@ -50,7 +60,8 @@ class SystemContainer:
             llm_provider=self.llm,
             event_bus=self.event_bus,
             tool_registry=self.tool_registry,
-            memory_provider=self.memory
+            memory_provider=self.memory,
+            approval_callback=cli_approval_callback
         )
         self.reflection = ReflectionEngine(
             llm_provider=self.llm,

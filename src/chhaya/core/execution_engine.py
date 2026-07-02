@@ -4,10 +4,10 @@ Orchestrates the running of an AgentBlueprint against a specific task.
 """
 
 import json
-from typing import Any, Dict
+from typing import Any, Callable, Dict, Optional
 import structlog
 
-from chhaya.domain.models import AgentBlueprint
+from chhaya.domain.models import AgentBlueprint, GuardrailLevel
 from chhaya.interfaces.event_bus import EventBus
 from chhaya.interfaces.llm_provider import LLMProvider
 from chhaya.core.tool_registry import ToolRegistry
@@ -29,15 +29,22 @@ class ExecutionEngine:
         llm_provider: LLMProvider,
         event_bus: EventBus,
         tool_registry: ToolRegistry,
-        memory_provider: MemoryProvider
+        memory_provider: MemoryProvider,
+        approval_callback: Optional[Callable[[str, str, Dict[str, Any]], bool]] = None
     ):
         """
         Initializes the Execution Engine with its required dependencies.
+
+        Args:
+            approval_callback: A function that takes (agent_name, tool_name, arguments)
+                               and returns a boolean indicating if the tool execution is approved.
+                               If None, actions requiring approval are automatically denied.
         """
         self.llm_provider = llm_provider
         self.event_bus = event_bus
         self.tool_registry = tool_registry
         self.memory_provider = memory_provider
+        self.approval_callback = approval_callback
 
     def _build_system_prompt(self, blueprint: AgentBlueprint) -> str:
         """
@@ -72,8 +79,8 @@ The system will run the tool and feed the observation back to you. Do NOT output
 
         # Inject guardrail instructions
         prompt += f"\nGuardrail Level: {blueprint.guardrail_level.value.upper()}\n"
-        if blueprint.guardrail_level.value == "strict":
-            prompt += "You MUST ask for user approval before making any external changes or API calls.\n"
+        if blueprint.guardrail_level == GuardrailLevel.STRICT:
+            prompt += "You MUST ask for user approval before making any external changes or API calls. The system will intercept these for approval automatically.\n"
 
         return prompt
 
@@ -93,6 +100,51 @@ The system will run the tool and feed the observation back to you. Do NOT output
             except json.JSONDecodeError:
                 pass
         return None
+
+    def _check_guardrails(self, blueprint: AgentBlueprint, tool_name: str, arguments: Dict[str, Any]) -> bool:
+        """
+        Evaluates whether a tool call is permitted based on the agent's guardrail level.
+
+        Returns True if approved, False if denied.
+        """
+        if blueprint.guardrail_level == GuardrailLevel.RELAXED:
+            return True
+
+        # For this slice, STRICT means ALL tool calls require human approval.
+        # MODERATE could mean checking against a list of "safe" tools, but we'll treat it
+        # as requiring approval for specific tools (simulated here as all tools except 'save_memory')
+        needs_approval = False
+
+        if blueprint.guardrail_level == GuardrailLevel.STRICT:
+            needs_approval = True
+        elif blueprint.guardrail_level == GuardrailLevel.MODERATE:
+            # Hardcoded sensitive list for demonstration
+            safe_tools = ["save_memory"]
+            if tool_name not in safe_tools:
+                needs_approval = True
+
+        if not needs_approval:
+            return True
+
+        logger.info("Guardrail intercept: Approval required", agent=blueprint.name, tool=tool_name)
+        self.event_bus.publish("guardrail_approval_requested", {
+            "agent_name": blueprint.name,
+            "tool_name": tool_name,
+            "arguments": arguments
+        })
+
+        if self.approval_callback:
+            approved = self.approval_callback(blueprint.name, tool_name, arguments)
+            if approved:
+                logger.info("Guardrail intercept: Approved", agent=blueprint.name, tool=tool_name)
+                return True
+            else:
+                logger.info("Guardrail intercept: Denied", agent=blueprint.name, tool=tool_name)
+                return False
+
+        # If no callback is configured, deny by default for safety
+        logger.warning("Guardrail intercept: Denied (No approval callback configured)", agent=blueprint.name)
+        return False
 
     def run(self, blueprint: AgentBlueprint, task: str, workspace: Workspace) -> str:
         """
@@ -146,24 +198,28 @@ The system will run the tool and feed the observation back to you. Do NOT output
                     tool_name = tool_call.get("name")
                     arguments = tool_call.get("arguments", {})
 
-                    logger.debug("Executing tool call", tool=tool_name, arguments=arguments)
+                    logger.debug("Attempting tool call", tool=tool_name, arguments=arguments)
 
                     # Ensure tool is authorized for this agent
                     if tool_name not in blueprint.tools:
                         observation = f"Error: Tool '{tool_name}' is not authorized for this agent."
                     else:
-                        tool = self.tool_registry.get_tool(tool_name)
-                        if tool:
-                            try:
-                                # Inject context dependencies to kwargs
-                                arguments["_agent_name"] = blueprint.name
-                                arguments["_workspace"] = workspace
-
-                                observation = str(tool.execute(**arguments))
-                            except Exception as ex:
-                                observation = f"Tool execution failed: {ex}"
+                        # Guardrail Check
+                        if not self._check_guardrails(blueprint, tool_name, arguments):
+                            observation = "Error: Execution denied by user/guardrails."
                         else:
-                            observation = f"Error: Tool '{tool_name}' not found in registry."
+                            tool = self.tool_registry.get_tool(tool_name)
+                            if tool:
+                                try:
+                                    # Inject context dependencies to kwargs
+                                    arguments["_agent_name"] = blueprint.name
+                                    arguments["_workspace"] = workspace
+
+                                    observation = str(tool.execute(**arguments))
+                                except Exception as ex:
+                                    observation = f"Tool execution failed: {ex}"
+                            else:
+                                observation = f"Error: Tool '{tool_name}' not found in registry."
 
                     logger.debug("Tool observation", tool=tool_name, observation=observation)
                     history += f"\nObservation: {observation}"

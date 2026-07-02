@@ -98,11 +98,13 @@ def test_execution_engine_success(base_blueprint):
     workspace = MockWorkspace()
     memory = MockMemoryProvider()
 
+    # Pass an always-approve callback to bypass strict guardrails for the pure success test
     engine = ExecutionEngine(
         llm_provider=llm,
         event_bus=bus,
         tool_registry=registry,
-        memory_provider=memory
+        memory_provider=memory,
+        approval_callback=lambda a, t, kwargs: True
     )
 
     # Run
@@ -195,7 +197,8 @@ def test_execution_engine_react_loop(base_blueprint):
         llm_provider=llm,
         event_bus=bus,
         tool_registry=registry,
-        memory_provider=memory
+        memory_provider=memory,
+        approval_callback=lambda a, t, kwargs: True
     )
 
     result = engine.run(blueprint=base_blueprint, task="Use the tool", workspace=workspace)
@@ -222,7 +225,8 @@ def test_execution_engine_max_iterations(base_blueprint):
         llm_provider=llm,
         event_bus=bus,
         tool_registry=registry,
-        memory_provider=memory
+        memory_provider=memory,
+        approval_callback=lambda a, t, kwargs: True
     )
 
     # Engine defaults to MAX_ITERATIONS = 10
@@ -230,3 +234,65 @@ def test_execution_engine_max_iterations(base_blueprint):
         engine.run(blueprint=base_blueprint, task="Loop forever", workspace=workspace)
 
     assert llm.call_count == 10
+
+
+def test_execution_engine_guardrail_denied(base_blueprint):
+    """Test that a denied tool call returns a failure observation to the LLM."""
+    responses = [
+        '```json\n{"tool_call": true, "name": "mock_tool", "arguments": {}}\n```',
+        'Final answer: I was denied.'
+    ]
+
+    llm = MockLLMProvider(responses=responses)
+    bus = MockEventBus()
+    registry = ToolRegistry()
+    registry.register(MockTool())
+    workspace = MockWorkspace()
+    memory = MockMemoryProvider()
+
+    # Reject all calls
+    engine = ExecutionEngine(
+        llm_provider=llm,
+        event_bus=bus,
+        tool_registry=registry,
+        memory_provider=memory,
+        approval_callback=lambda a, t, kwargs: False
+    )
+
+    result = engine.run(blueprint=base_blueprint, task="Use the tool", workspace=workspace)
+
+    assert result == "Final answer: I was denied."
+    # Check that the denial observation was injected
+    assert "Observation: Error: Execution denied by user/guardrails." in llm.last_prompt
+
+
+def test_execution_engine_guardrail_relaxed(base_blueprint):
+    """Test that RELAXED guardrail automatically approves without the callback."""
+    base_blueprint.guardrail_level = GuardrailLevel.RELAXED
+
+    responses = [
+        '```json\n{"tool_call": true, "name": "mock_tool", "arguments": {}}\n```',
+        'Final answer: Done.'
+    ]
+
+    llm = MockLLMProvider(responses=responses)
+    bus = MockEventBus()
+    registry = ToolRegistry()
+    registry.register(MockTool())
+    workspace = MockWorkspace()
+    memory = MockMemoryProvider()
+
+    # Callback raises an error if called, proving it's bypassed
+    def crash_callback(a, t, kwargs):
+        raise AssertionError("Callback should not be invoked for RELAXED")
+
+    engine = ExecutionEngine(
+        llm_provider=llm,
+        event_bus=bus,
+        tool_registry=registry,
+        memory_provider=memory,
+        approval_callback=crash_callback
+    )
+
+    result = engine.run(blueprint=base_blueprint, task="Use the tool", workspace=workspace)
+    assert result == "Final answer: Done."
