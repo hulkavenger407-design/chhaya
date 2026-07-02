@@ -9,6 +9,7 @@ from typing import Any, Dict
 import typer
 from rich.console import Console
 from rich.panel import Panel
+from rich.progress import Progress, SpinnerColumn, TextColumn
 
 from chhaya.core.config import settings
 from chhaya.core.event_bus import InMemoryEventBus
@@ -18,11 +19,14 @@ from chhaya.infrastructure.llm.ollama import OllamaProvider
 from chhaya.infrastructure.workspace.local import LocalWorkspace
 from chhaya.core.tool_registry import ToolRegistry
 from chhaya.tools.memory_tool import SaveMemoryTool
+from chhaya.tools.jules_tool import AskJulesTool
 from chhaya.core.agent_registry import AgentRegistry
 from chhaya.core.factory import AgentFactory
 from chhaya.core.execution_engine import ExecutionEngine
 from chhaya.core.reflection_engine import ReflectionEngine
+from chhaya.core.planner import ProjectPlanner
 from chhaya.interfaces.voice import VoiceInterface
+from chhaya.domain.models import AgentBlueprint, ModelTier, GuardrailLevel
 
 app = typer.Typer(help="Chhaya: Autonomous Agent Factory", no_args_is_help=True)
 console = Console()
@@ -48,6 +52,7 @@ class SystemContainer:
         self.tool_registry = ToolRegistry()
         # Register built-in tools
         self.tool_registry.register(SaveMemoryTool(memory_provider=self.memory))
+        self.tool_registry.register(AskJulesTool())
 
         self.agent_registry = AgentRegistry(storage_provider=self.storage)
 
@@ -71,6 +76,7 @@ class SystemContainer:
             tool_registry=self.tool_registry,
             event_bus=self.event_bus
         )
+        self.planner = ProjectPlanner(llm_provider=self.llm)
 
 # Global context to hold instantiated dependencies during CLI run
 ctx: SystemContainer
@@ -168,6 +174,55 @@ def reflect(
     except Exception as e:
         console.print(f"[bold red]Unexpected error:[/bold red] {e}")
         raise typer.Exit(code=1)
+
+
+@app.command()
+def project(goal: str = typer.Argument(..., help="The large project goal to decompose and execute.")):
+    """
+    Decompose a large project into sub-tasks and execute them sequentially.
+    """
+    console.print(f"🏗️  [cyan]Planning project:[/cyan] '{goal}'...")
+
+    try:
+        with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}")) as progress:
+            plan_task = progress.add_task(description="Decomposing project...", total=None)
+            plan = ctx.planner.create_plan(goal)
+            progress.update(plan_task, completed=100)
+
+        console.print(f"[bold green]Created {len(plan.sub_tasks)} tasks![/bold green]")
+
+        # Create an orchestration agent specifically for this project
+        orchestrator_blueprint = AgentBlueprint(
+            name=f"orchestrator_{hash(goal)}",
+            role="Project execution orchestrator",
+            system_prompt="Execute the given sub-task to the best of your ability. Rely on Jules for complex external tasks.",
+            model_tier=ModelTier.EXECUTION_7B,
+            guardrail_level=GuardrailLevel.MODERATE,
+            tools=["ask_jules"]
+        )
+        ctx.agent_registry.save_blueprint(orchestrator_blueprint)
+        workspace = LocalWorkspace(agent_name=orchestrator_blueprint.name, base_path=settings.workspace.base_path)
+
+        project_context = ""
+
+        for task in plan.sub_tasks:
+            console.print(f"\n▶️ [bold]Executing Task {task.id}:[/bold] {task.description}")
+
+            # Combine the current task with the context of what has already been done
+            full_task = f"Previous Context:\n{project_context}\n\nCurrent Task:\n{task.description}"
+
+            result = ctx.execution.run(blueprint=orchestrator_blueprint, task=full_task, workspace=workspace)
+            console.print(f"[green]Task {task.id} Complete.[/green]")
+
+            # Append result to context for the next task
+            project_context += f"Task {task.id} Result: {result}\n---\n"
+
+        console.print(Panel("[bold green]Project Execution Complete![/bold green]", title="Project Planner"))
+
+    except Exception as e:
+        console.print(f"[bold red]Project execution failed:[/bold red] {e}")
+        raise typer.Exit(code=1)
+
 
 @app.command()
 def voice():

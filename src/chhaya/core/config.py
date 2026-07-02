@@ -5,7 +5,7 @@ Loads configuration from YAML and environment variables using Pydantic Settings.
 
 import os
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 import yaml
 from pydantic import BaseModel, Field
@@ -32,6 +32,11 @@ class WorkspaceConfig(BaseModel):
     base_path: str = "./workspaces"
 
 
+class ExternalAgentsConfig(BaseModel):
+    jules_url: str = "https://api.jules.ai/v1/tasks"
+    jules_api_key: Optional[str] = None
+
+
 class LoggingConfig(BaseModel):
     level: str = "INFO"
 
@@ -50,10 +55,12 @@ class ChhayaSettings(BaseSettings):
     storage: StorageConfig = Field(default_factory=StorageConfig)
     memory: MemoryConfig = Field(default_factory=MemoryConfig)
     workspace: WorkspaceConfig = Field(default_factory=WorkspaceConfig)
+    external_agents: ExternalAgentsConfig = Field(default_factory=ExternalAgentsConfig)
     logging: LoggingConfig = Field(default_factory=LoggingConfig)
 
     # Global overrides via purely Env Vars
     ollama_base_url: str = Field(default="http://localhost:11434", alias="OLLAMA_BASE_URL", validation_alias="OLLAMA_BASE_URL")
+    jules_api_key: Optional[str] = Field(default=None, alias="JULES_API_KEY", validation_alias="JULES_API_KEY")
 
 
 def load_config(config_path: str | None = None) -> ChhayaSettings:
@@ -91,6 +98,10 @@ def load_config(config_path: str | None = None) -> ChhayaSettings:
 
     if config_path:
         settings.config_path = config_path
+
+    # Map the root level alias directly if provided
+    if settings.jules_api_key:
+        settings.external_agents.jules_api_key = settings.jules_api_key
 
     return settings
 
