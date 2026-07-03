@@ -1,0 +1,35 @@
+/* Iron Man glassmorphism theme */
+QMainWindow {
+    background-color: #0A0E1A; /* deep navy */
+}
+
+QWidget {
+    color: white;
+    font-family: "Rajdhani";
+}
+
+QTextEdit, QListWidget {
+    background-color: rgba(255, 255, 255, 0.05); /* Glass panel */
+    border: 1px solid #00D4FF; /* Electric blue accent */
+    border-radius: 5px;
+    padding: 10px;
+}
+
+QPushButton {
+    background-color: transparent;
+    border: 1px solid #00FFCC; /* Cyan glow */
+    color: #00FFCC;
+    border-radius: 5px;
+    padding: 5px 15px;
+    font-family: "Orbitron";
+}
+
+QPushButton:hover {
+    background-color: rgba(0, 255, 204, 0.2);
+}
+
+QLabel#header {
+    font-family: "Orbitron";
+    font-size: 18px;
+    color: #00D4FF;
+}
