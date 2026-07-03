@@ -40,7 +40,7 @@ dev = [
 [project.scripts]
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/chhaya"]
+packages = ["src/chhaya_v1", "src/chhaya_v2"]
 
 [tool.ruff]
 line-length = 100

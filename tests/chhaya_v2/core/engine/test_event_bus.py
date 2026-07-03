@@ -1,6 +1,6 @@
 import pytest
 import asyncio
-from chhaya.core.engine.event_bus import EventBus
+from chhaya_v2.core.engine.event_bus import EventBus
 
 @pytest.mark.asyncio
 async def test_event_bus_pub_sub():

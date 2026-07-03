@@ -1,6 +1,6 @@
 import sys
-from chhaya.core.engine.config import settings
-from chhaya.core.engine.logger import logger
+from chhaya_v2.core.engine.config import settings
+from chhaya_v2.core.engine.logger import logger
 
 def main():
     logger.info("running_health_check", environment=settings.environment)
@@ -14,7 +14,7 @@ def main():
     logger.info("storage_paths_verified", chroma_dir=settings.chroma_db_dir)
 
     # 3. Simple Event Bus sanity check
-    from chhaya.core.engine.event_bus import event_bus
+    from chhaya_v2.core.engine.event_bus import event_bus
     logger.info("event_bus_ready")
 
     logger.info("health_check_passed")

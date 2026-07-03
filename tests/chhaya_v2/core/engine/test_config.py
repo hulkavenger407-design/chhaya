@@ -1,6 +1,6 @@
 import pytest
 from pydantic import ValidationError
-from chhaya.core.engine.config import Settings
+from chhaya_v2.core.engine.config import Settings
 
 def test_config_defaults():
     settings = Settings()
