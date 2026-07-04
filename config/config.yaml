@@ -1,0 +1,20 @@
+# Chhaya Main Configuration File
+
+llm:
+  default_provider: "ollama"
+  tier_14b_model: "llama3:14b" # Adjust based on actual model name
+  tier_7b_model: "llama3:7b"   # Adjust based on actual model name
+
+storage:
+  backend: "sqlite"
+  database_url: "sqlite:///./chhaya.db"
+
+memory:
+  vector_store: "chroma"
+  path: "./chroma_db"
+
+workspace:
+  base_path: "./workspaces"
+
+logging:
+  level: "INFO"
