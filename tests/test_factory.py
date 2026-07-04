@@ -5,13 +5,13 @@ Tests for Chhaya Agent Factory.
 from typing import Any
 import pytest
 
-from chhaya_v1.core.factory import AgentFactory
-from chhaya_v1.interfaces.llm_provider import LLMProvider
-from chhaya_v1.core.agent_registry import AgentRegistry
-from chhaya_v1.core.tool_registry import ToolRegistry
-from chhaya_v1.interfaces.event_bus import EventBus
-from chhaya_v1.interfaces.storage_provider import StorageProvider
-from chhaya_v1.domain.models import ModelTier, GuardrailLevel
+from chhaya.core.factory import AgentFactory
+from chhaya.interfaces.llm_provider import LLMProvider
+from chhaya.core.agent_registry import AgentRegistry
+from chhaya.core.tool_registry import ToolRegistry
+from chhaya.interfaces.event_bus import EventBus
+from chhaya.interfaces.storage_provider import StorageProvider
+from chhaya.domain.models import ModelTier, GuardrailLevel
 
 
 class MockLLMProvider(LLMProvider):

@@ -5,8 +5,8 @@ Tests for Chhaya Project Planner.
 from typing import Any
 import pytest
 
-from chhaya_v1.core.planner import ProjectPlanner
-from chhaya_v1.interfaces.llm_provider import LLMProvider
+from chhaya.core.planner import ProjectPlanner
+from chhaya.interfaces.llm_provider import LLMProvider
 
 
 class MockLLMProvider(LLMProvider):

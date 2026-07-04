@@ -6,7 +6,7 @@ import tempfile
 import os
 import pytest
 
-from chhaya_v1.infrastructure.storage.sqlite import SQLiteStorageProvider
+from chhaya.infrastructure.storage.sqlite import SQLiteStorageProvider
 
 
 @pytest.fixture

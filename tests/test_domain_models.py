@@ -5,7 +5,7 @@ Tests for Chhaya Domain Models.
 import pytest
 from pydantic import ValidationError
 
-from chhaya_v1.domain.models import AgentBlueprint, ModelTier, GuardrailLevel, MemoryConfig
+from chhaya.domain.models import AgentBlueprint, ModelTier, GuardrailLevel, MemoryConfig
 
 
 def test_agent_blueprint_valid_creation():

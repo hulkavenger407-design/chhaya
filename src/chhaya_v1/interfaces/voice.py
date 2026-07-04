@@ -12,9 +12,9 @@ import speech_recognition as sr
 import edge_tts
 import pygame
 
-from chhaya_v1.core.execution_engine import ExecutionEngine
-from chhaya_v1.domain.models import AgentBlueprint, ModelTier, GuardrailLevel
-from chhaya_v1.interfaces.workspace import Workspace
+from chhaya.core.execution_engine import ExecutionEngine
+from chhaya.domain.models import AgentBlueprint, ModelTier, GuardrailLevel
+from chhaya.interfaces.workspace import Workspace
 
 logger = structlog.get_logger(__name__)
 

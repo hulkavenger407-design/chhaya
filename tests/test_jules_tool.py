@@ -6,7 +6,7 @@ from unittest.mock import patch, MagicMock
 import pytest
 import httpx
 
-from chhaya_v1.tools.jules_tool import AskJulesTool
+from chhaya.tools.jules_tool import AskJulesTool
 
 
 @pytest.fixture
@@ -17,13 +17,13 @@ def mock_httpx_post():
 
 @pytest.fixture
 def mock_is_connected():
-    with patch("chhaya_v1.tools.jules_tool.is_connected") as mock_conn:
+    with patch("chhaya.tools.jules_tool.is_connected") as mock_conn:
         yield mock_conn
 
 
 @pytest.fixture
 def mock_settings():
-    with patch("chhaya_v1.tools.jules_tool.settings") as settings:
+    with patch("chhaya.tools.jules_tool.settings") as settings:
         yield settings
 
 

@@ -5,9 +5,9 @@ Tests for Chhaya Agent Registry.
 from typing import Any, Optional
 import pytest
 
-from chhaya_v1.core.agent_registry import AgentRegistry
-from chhaya_v1.domain.models import AgentBlueprint
-from chhaya_v1.interfaces.storage_provider import StorageProvider
+from chhaya.core.agent_registry import AgentRegistry
+from chhaya.domain.models import AgentBlueprint
+from chhaya.interfaces.storage_provider import StorageProvider
 
 
 class MockStorageProvider(StorageProvider):

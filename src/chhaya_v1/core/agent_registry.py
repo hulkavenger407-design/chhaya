@@ -6,8 +6,8 @@ Provides a domain-specific wrapper around the StorageProvider for AgentBlueprint
 from typing import List, Optional
 import structlog
 
-from chhaya_v1.domain.models import AgentBlueprint
-from chhaya_v1.interfaces.storage_provider import StorageProvider
+from chhaya.domain.models import AgentBlueprint
+from chhaya.interfaces.storage_provider import StorageProvider
 
 logger = structlog.get_logger(__name__)
 

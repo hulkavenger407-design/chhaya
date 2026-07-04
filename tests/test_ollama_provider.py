@@ -6,8 +6,8 @@ from unittest.mock import patch, MagicMock
 import pytest
 import httpx
 
-from chhaya_v1.infrastructure.llm.ollama import OllamaProvider
-from chhaya_v1.domain.models import ModelTier
+from chhaya.infrastructure.llm.ollama import OllamaProvider
+from chhaya.domain.models import ModelTier
 
 
 @pytest.fixture

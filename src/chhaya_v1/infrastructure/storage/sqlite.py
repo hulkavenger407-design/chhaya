@@ -10,8 +10,8 @@ from sqlmodel import Field, Session, SQLModel, create_engine, select
 from sqlalchemy import UniqueConstraint
 import structlog
 
-from chhaya_v1.interfaces.storage_provider import StorageProvider
-from chhaya_v1.core.config import settings
+from chhaya.interfaces.storage_provider import StorageProvider
+from chhaya.core.config import settings
 
 logger = structlog.get_logger(__name__)
 

@@ -6,7 +6,7 @@ import os
 import tempfile
 import pytest
 
-from chhaya_v1.infrastructure.workspace.local import LocalWorkspace
+from chhaya.infrastructure.workspace.local import LocalWorkspace
 
 
 @pytest.fixture

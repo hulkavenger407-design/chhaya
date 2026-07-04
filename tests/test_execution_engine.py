@@ -5,14 +5,14 @@ Tests for Chhaya Execution Engine.
 from unittest.mock import MagicMock
 import pytest
 
-from chhaya_v1.core.execution_engine import ExecutionEngine
-from chhaya_v1.domain.models import AgentBlueprint, ModelTier, GuardrailLevel, MemoryConfig
-from chhaya_v1.interfaces.event_bus import EventBus
-from chhaya_v1.interfaces.llm_provider import LLMProvider
-from chhaya_v1.interfaces.tool_plugin import ToolPlugin
-from chhaya_v1.core.tool_registry import ToolRegistry
-from chhaya_v1.interfaces.workspace import Workspace
-from chhaya_v1.interfaces.memory_provider import MemoryProvider, MemoryRecord
+from chhaya.core.execution_engine import ExecutionEngine
+from chhaya.domain.models import AgentBlueprint, ModelTier, GuardrailLevel, MemoryConfig
+from chhaya.interfaces.event_bus import EventBus
+from chhaya.interfaces.llm_provider import LLMProvider
+from chhaya.interfaces.tool_plugin import ToolPlugin
+from chhaya.core.tool_registry import ToolRegistry
+from chhaya.interfaces.workspace import Workspace
+from chhaya.interfaces.memory_provider import MemoryProvider, MemoryRecord
 
 
 # --- Mock Implementations ---

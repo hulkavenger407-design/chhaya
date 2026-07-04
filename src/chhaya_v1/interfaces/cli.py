@@ -11,22 +11,22 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.progress import Progress, SpinnerColumn, TextColumn
 
-from chhaya_v1.core.config import settings
-from chhaya_v1.core.event_bus import InMemoryEventBus
-from chhaya_v1.infrastructure.storage.sqlite import SQLiteStorageProvider
-from chhaya_v1.infrastructure.memory.chroma import ChromaMemoryProvider
-from chhaya_v1.infrastructure.llm.ollama import OllamaProvider
-from chhaya_v1.infrastructure.workspace.local import LocalWorkspace
-from chhaya_v1.core.tool_registry import ToolRegistry
-from chhaya_v1.tools.memory_tool import SaveMemoryTool
-from chhaya_v1.tools.jules_tool import AskJulesTool
-from chhaya_v1.core.agent_registry import AgentRegistry
-from chhaya_v1.core.factory import AgentFactory
-from chhaya_v1.core.execution_engine import ExecutionEngine
-from chhaya_v1.core.reflection_engine import ReflectionEngine
-from chhaya_v1.core.planner import ProjectPlanner
-from chhaya_v1.interfaces.voice import VoiceInterface
-from chhaya_v1.domain.models import AgentBlueprint, ModelTier, GuardrailLevel
+from chhaya.core.config import settings
+from chhaya.core.event_bus import InMemoryEventBus
+from chhaya.infrastructure.storage.sqlite import SQLiteStorageProvider
+from chhaya.infrastructure.memory.chroma import ChromaMemoryProvider
+from chhaya.infrastructure.llm.ollama import OllamaProvider
+from chhaya.infrastructure.workspace.local import LocalWorkspace
+from chhaya.core.tool_registry import ToolRegistry
+from chhaya.tools.memory_tool import SaveMemoryTool
+from chhaya.tools.jules_tool import AskJulesTool
+from chhaya.core.agent_registry import AgentRegistry
+from chhaya.core.factory import AgentFactory
+from chhaya.core.execution_engine import ExecutionEngine
+from chhaya.core.reflection_engine import ReflectionEngine
+from chhaya.core.planner import ProjectPlanner
+from chhaya.interfaces.voice import VoiceInterface
+from chhaya.domain.models import AgentBlueprint, ModelTier, GuardrailLevel
 
 app = typer.Typer(help="Chhaya: Autonomous Agent Factory", no_args_is_help=True)
 console = Console()

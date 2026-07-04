@@ -5,7 +5,7 @@ In-Memory Event Bus Implementation.
 from typing import Any, Callable, Dict, List
 import structlog
 
-from chhaya_v1.interfaces.event_bus import EventBus
+from chhaya.interfaces.event_bus import EventBus
 
 logger = structlog.get_logger(__name__)
 

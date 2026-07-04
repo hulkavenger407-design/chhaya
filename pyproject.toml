@@ -27,8 +27,7 @@ dependencies = [
     "cryptography",
     "langgraph",
     "structlog",
-    "pyyaml",
-    "PySide6"
+    "pyyaml"
 ]
 
 [project.optional-dependencies]

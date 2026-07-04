@@ -6,9 +6,9 @@ from unittest.mock import MagicMock, patch
 import pytest
 import time
 
-from chhaya_v1.core.scheduler import AgentScheduler
-from chhaya_v1.core.event_bus import InMemoryEventBus
-from chhaya_v1.domain.models import AgentBlueprint
+from chhaya.core.scheduler import AgentScheduler
+from chhaya.core.event_bus import InMemoryEventBus
+from chhaya.domain.models import AgentBlueprint
 
 
 class MockExecutionEngine:
@@ -68,7 +68,7 @@ def test_scheduler_event_trigger(scheduler_deps):
         scheduler.schedule_on_event("worker", "process file {filename}", "file_uploaded")
 
         # Fire event
-        with patch("chhaya_v1.core.scheduler.LocalWorkspace"):
+        with patch("chhaya.core.scheduler.LocalWorkspace"):
             event_bus.publish("file_uploaded", {"filename": "data.csv"})
 
             # APScheduler runs in a background thread, so we need to wait a tiny bit
@@ -89,7 +89,7 @@ def test_scheduler_event_trigger_missing_key(scheduler_deps):
     try:
         scheduler.schedule_on_event("worker", "process file {filename}", "file_uploaded")
 
-        with patch("chhaya_v1.core.scheduler.LocalWorkspace"):
+        with patch("chhaya.core.scheduler.LocalWorkspace"):
             # Fire event WITHOUT the expected 'filename' key
             event_bus.publish("file_uploaded", {"other_key": "data.csv"})
 

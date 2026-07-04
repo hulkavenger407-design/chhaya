@@ -6,10 +6,10 @@ from unittest.mock import patch, AsyncMock, MagicMock
 import pytest
 import asyncio
 
-from chhaya_v1.interfaces.voice import VoiceInterface
-from chhaya_v1.domain.models import AgentBlueprint
-from chhaya_v1.core.execution_engine import ExecutionEngine
-from chhaya_v1.interfaces.workspace import Workspace
+from chhaya.interfaces.voice import VoiceInterface
+from chhaya.domain.models import AgentBlueprint
+from chhaya.core.execution_engine import ExecutionEngine
+from chhaya.interfaces.workspace import Workspace
 
 
 class MockExecutionEngine:

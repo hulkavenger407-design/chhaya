@@ -7,8 +7,8 @@ from typing import Any
 import httpx
 import structlog
 
-from chhaya_v1.interfaces.llm_provider import LLMProvider
-from chhaya_v1.core.config import settings
+from chhaya.interfaces.llm_provider import LLMProvider
+from chhaya.core.config import settings
 
 logger = structlog.get_logger(__name__)
 

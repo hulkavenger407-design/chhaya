@@ -8,8 +8,8 @@ import httpx
 import structlog
 import socket
 
-from chhaya_v1.interfaces.tool_plugin import ToolPlugin
-from chhaya_v1.core.config import settings
+from chhaya.interfaces.tool_plugin import ToolPlugin
+from chhaya.core.config import settings
 
 logger = structlog.get_logger(__name__)
 

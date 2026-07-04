@@ -7,8 +7,8 @@ from typing import Any
 import uuid
 import structlog
 
-from chhaya_v1.interfaces.tool_plugin import ToolPlugin
-from chhaya_v1.interfaces.memory_provider import MemoryProvider, MemoryRecord
+from chhaya.interfaces.tool_plugin import ToolPlugin
+from chhaya.interfaces.memory_provider import MemoryProvider, MemoryRecord
 
 logger = structlog.get_logger(__name__)
 

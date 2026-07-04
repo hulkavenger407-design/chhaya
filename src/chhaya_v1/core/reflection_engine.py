@@ -7,11 +7,11 @@ import json
 from typing import Any, Dict
 import structlog
 
-from chhaya_v1.domain.models import AgentBlueprint, ModelTier
-from chhaya_v1.interfaces.llm_provider import LLMProvider
-from chhaya_v1.core.agent_registry import AgentRegistry
-from chhaya_v1.core.tool_registry import ToolRegistry
-from chhaya_v1.interfaces.event_bus import EventBus
+from chhaya.domain.models import AgentBlueprint, ModelTier
+from chhaya.interfaces.llm_provider import LLMProvider
+from chhaya.core.agent_registry import AgentRegistry
+from chhaya.core.tool_registry import ToolRegistry
+from chhaya.interfaces.event_bus import EventBus
 
 logger = structlog.get_logger(__name__)
 

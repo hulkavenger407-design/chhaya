@@ -8,11 +8,11 @@ import structlog
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
 
-from chhaya_v1.interfaces.event_bus import EventBus
-from chhaya_v1.core.execution_engine import ExecutionEngine
-from chhaya_v1.core.agent_registry import AgentRegistry
-from chhaya_v1.infrastructure.workspace.local import LocalWorkspace
-from chhaya_v1.core.config import settings
+from chhaya.interfaces.event_bus import EventBus
+from chhaya.core.execution_engine import ExecutionEngine
+from chhaya.core.agent_registry import AgentRegistry
+from chhaya.infrastructure.workspace.local import LocalWorkspace
+from chhaya.core.config import settings
 
 logger = structlog.get_logger(__name__)
 

@@ -6,7 +6,7 @@ Manages the registration and discovery of ToolPlugins.
 from typing import Dict, List, Optional
 import structlog
 
-from chhaya_v1.interfaces.tool_plugin import ToolPlugin
+from chhaya.interfaces.tool_plugin import ToolPlugin
 
 logger = structlog.get_logger(__name__)
 

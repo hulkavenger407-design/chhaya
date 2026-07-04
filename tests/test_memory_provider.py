@@ -5,8 +5,8 @@ Tests for Chhaya ChromaDB Memory Provider.
 import pytest
 import chromadb
 
-from chhaya_v1.infrastructure.memory.chroma import ChromaMemoryProvider
-from chhaya_v1.interfaces.memory_provider import MemoryRecord
+from chhaya.infrastructure.memory.chroma import ChromaMemoryProvider
+from chhaya.interfaces.memory_provider import MemoryRecord
 
 
 @pytest.fixture

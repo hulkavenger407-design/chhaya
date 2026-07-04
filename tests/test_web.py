@@ -6,13 +6,13 @@ from unittest.mock import patch, MagicMock
 import pytest
 from fastapi.testclient import TestClient
 
-from chhaya_v1.interfaces.web import app, AppState
-from chhaya_v1.domain.models import AgentBlueprint
+from chhaya.interfaces.web import app, AppState
+from chhaya.domain.models import AgentBlueprint
 
 # We mock the entire AppState to prevent real DB/LLM initializations
 @pytest.fixture(autouse=True)
 def mock_app_state():
-    with patch("chhaya_v1.interfaces.web.AppState") as mock_state_class:
+    with patch("chhaya.interfaces.web.AppState") as mock_state_class:
         mock_state = mock_state_class.return_value
 
         # Setup common mock returns
@@ -78,7 +78,7 @@ def test_get_agent_not_found(client, mock_app_state):
 
 def test_run_agent(client, mock_app_state):
     # Mock workspace to avoid file operations
-    with patch("chhaya_v1.interfaces.web.LocalWorkspace"):
+    with patch("chhaya.interfaces.web.LocalWorkspace"):
         response = client.post(
             "/api/agents/web_bot/run",
             json={"task": "Do a web task"}

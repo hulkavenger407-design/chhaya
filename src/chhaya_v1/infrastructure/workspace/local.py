@@ -7,8 +7,8 @@ import os
 from pathlib import Path
 import structlog
 
-from chhaya_v1.interfaces.workspace import Workspace
-from chhaya_v1.core.config import settings
+from chhaya.interfaces.workspace import Workspace
+from chhaya.core.config import settings
 
 logger = structlog.get_logger(__name__)
 

@@ -5,8 +5,8 @@ Tests for Chhaya Tool Registry.
 from typing import Any
 import pytest
 
-from chhaya_v1.interfaces.tool_plugin import ToolPlugin
-from chhaya_v1.core.tool_registry import ToolRegistry
+from chhaya.interfaces.tool_plugin import ToolPlugin
+from chhaya.core.tool_registry import ToolRegistry
 
 
 class DummyTool(ToolPlugin):

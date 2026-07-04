@@ -8,8 +8,8 @@ from typing import Any, Dict, List
 from pydantic import BaseModel
 import structlog
 
-from chhaya_v1.interfaces.llm_provider import LLMProvider
-from chhaya_v1.domain.models import ModelTier
+from chhaya.interfaces.llm_provider import LLMProvider
+from chhaya.domain.models import ModelTier
 
 logger = structlog.get_logger(__name__)
 

@@ -6,8 +6,8 @@ from unittest.mock import patch, MagicMock
 import pytest
 from typer.testing import CliRunner
 
-from chhaya_v1.interfaces.cli import app
-from chhaya_v1.domain.models import AgentBlueprint
+from chhaya.interfaces.cli import app
+from chhaya.domain.models import AgentBlueprint
 
 runner = CliRunner()
 
@@ -15,7 +15,7 @@ runner = CliRunner()
 @pytest.fixture
 def mock_ctx():
     # Because `ctx` is instantiated globally via the Typer callback, we patch SystemContainer directly
-    with patch("chhaya_v1.interfaces.cli.SystemContainer") as mock_container:
+    with patch("chhaya.interfaces.cli.SystemContainer") as mock_container:
         mock_instance = mock_container.return_value
 
         # Setup common mock returns
@@ -45,7 +45,7 @@ def test_cli_run_agent(mock_ctx):
     mock_ctx.agent_registry.load_blueprint.return_value = mock_blueprint
     mock_ctx.execution.run.return_value = "Run successful!"
 
-    with patch("chhaya_v1.interfaces.cli.LocalWorkspace") as mock_workspace:
+    with patch("chhaya.interfaces.cli.LocalWorkspace") as mock_workspace:
         result = runner.invoke(app, ["run", "runner_bot", "Do a task"])
 
         assert result.exit_code == 0

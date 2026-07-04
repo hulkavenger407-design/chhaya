@@ -7,8 +7,8 @@ import chromadb
 from chromadb.config import Settings as ChromaSettings
 import structlog
 
-from chhaya_v1.interfaces.memory_provider import MemoryProvider, MemoryRecord
-from chhaya_v1.core.config import settings
+from chhaya.interfaces.memory_provider import MemoryProvider, MemoryRecord
+from chhaya.core.config import settings
 
 logger = structlog.get_logger(__name__)
 
